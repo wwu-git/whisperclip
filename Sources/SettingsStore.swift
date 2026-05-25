@@ -37,6 +37,8 @@ struct DefaultSettings {
     static let holdToTalk = false
     static let recordingCount = 0
     static let donationDialogShown = false
+    static let batchApplyPrompt = true
+    static let batchContinueOnError = true
     static let prompts: [Prompt] = [
         Prompt(label: "None", content: ""),
         Prompt(label: "Translate to English", content: "Translate the following text to English:"),
@@ -73,6 +75,9 @@ class SettingsStore: ObservableObject {
         case donationDialogShown = "donationDialogShown"
         case prompts = "prompts"
         case selectedPromptId = "selectedPromptId"
+        case batchOutputDirectoryBookmark = "batchOutputDirectoryBookmark"
+        case batchApplyPrompt = "batchApplyPrompt"
+        case batchContinueOnError = "batchContinueOnError"
     }
 
     private let defaults = UserDefaults.standard
@@ -222,6 +227,18 @@ class SettingsStore: ObservableObject {
             defaults.set(selectedPromptId, forKey: Keys.selectedPromptId.rawValue)
         }
     }
+
+    @Published var batchApplyPrompt: Bool = DefaultSettings.batchApplyPrompt {
+        didSet {
+            defaults.set(batchApplyPrompt, forKey: Keys.batchApplyPrompt.rawValue)
+        }
+    }
+
+    @Published var batchContinueOnError: Bool = DefaultSettings.batchContinueOnError {
+        didSet {
+            defaults.set(batchContinueOnError, forKey: Keys.batchContinueOnError.rawValue)
+        }
+    }
     
     // Computed property to get the current prompt content
     var currentPrompt: String {
@@ -280,6 +297,35 @@ class SettingsStore: ObservableObject {
         } else {
             self.prompts = DefaultSettings.prompts
         }
+        self.batchApplyPrompt = defaults.object(forKey: Keys.batchApplyPrompt.rawValue) == nil
+            ? DefaultSettings.batchApplyPrompt
+            : defaults.bool(forKey: Keys.batchApplyPrompt.rawValue)
+        self.batchContinueOnError = defaults.object(forKey: Keys.batchContinueOnError.rawValue) == nil
+            ? DefaultSettings.batchContinueOnError
+            : defaults.bool(forKey: Keys.batchContinueOnError.rawValue)
+    }
+
+    func saveBatchOutputDirectory(url: URL) {
+        if let data = try? url.bookmarkData(
+            options: .withSecurityScope,
+            includingResourceValuesForKeys: nil,
+            relativeTo: nil
+        ) {
+            defaults.set(data, forKey: Keys.batchOutputDirectoryBookmark.rawValue)
+        }
+    }
+
+    func resolveBatchOutputDirectory() -> URL? {
+        guard let data = defaults.data(forKey: Keys.batchOutputDirectoryBookmark.rawValue) else {
+            return nil
+        }
+        var stale = false
+        return try? URL(
+            resolvingBookmarkData: data,
+            options: .withSecurityScope,
+            relativeTo: nil,
+            bookmarkDataIsStale: &stale
+        )
     }
     
     private func savePrompts() {
@@ -355,6 +401,8 @@ class SettingsStore: ObservableObject {
         holdToTalk = DefaultSettings.holdToTalk
         prompts = DefaultSettings.prompts
         selectedPromptId = DefaultSettings.selectedPromptId
+        batchApplyPrompt = DefaultSettings.batchApplyPrompt
+        batchContinueOnError = DefaultSettings.batchContinueOnError
     }
 
 }

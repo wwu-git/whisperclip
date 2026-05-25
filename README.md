@@ -108,6 +108,9 @@ cd whisperclip
 4. **Press Option+Space** (or click Record) to start recording
 5. **Press again to stop** - text will be automatically copied to clipboard
 
+### Batch folder transcription
+On **Audio File**, use **Batch transcription** to select an input folder (recursive scan) and an output folder. Each audio file becomes a `.txt` with the same relative path. Options include applying the current prompt, continuing on error, conflict policy when outputs already exist, and canceling a run in progress.
+
 ### Customization
 - **Change hotkey**: Settings → Hotkey preferences
 - **Add custom prompts**: Settings → Prompts → Add new prompt
